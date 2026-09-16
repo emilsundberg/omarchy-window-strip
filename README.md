@@ -4,6 +4,8 @@ A compact window switcher with large application icons and a single
 window-title line. Each window gets its own entry, including multiple windows
 from the same app.
 
+![Window Strip showing Chromium, HEY, Basecamp, and YouTube with sample titles](preview.png)
+
 - Hold **Ctrl** and tap **Tab** to cycle through recently used windows.
 - Press **Ctrl+Shift+Tab** to go backward.
 - Release **Ctrl** to activate the selected window.
@@ -61,27 +63,17 @@ installation line above.
 
 ## Web-app names and icons
 
-A web app needs a desktop launcher that matches its window class. If it displays
-a browser-generated name or a letter, find its class with `hyprctl clients`
-and add a matching `StartupWMClass` to its launcher under
-`~/.local/share/applications/`.
+Names and icons come from installed desktop launchers. Exact desktop IDs and
+`StartupWMClass` mappings take priority. Chromium-family web apps can also match
+the launcher's URL or `--app-id`, including across browser profiles. URL-less
+wrappers can match a unique launcher name or ID against a hostname label, so
+apps such as HEY work without editing their launchers.
 
-For example, a Basecamp launcher opened through the 37signals launchpad can use:
-
-```ini
-Name=Basecamp
-Icon=basecamp
-StartupWMClass=chrome-launchpad.37signals.com__-Default
-```
-
-Use your actual window class; it can differ with the launch URL or browser
-profile. Keep the launcher's other fields intact. The icon must already be
-installed or specified as an absolute file path. After editing the launcher:
-
-```bash
-update-desktop-database ~/.local/share/applications
-omarchy restart shell
-```
+Ambiguous matches are left unresolved. When no launcher can be identified, URL
+apps display their hostname; opaque PWA IDs display `Web app`. Missing icons
+use the label's first letter. Arbitrary browser classes without identifying
+metadata cannot reliably reveal a product name or icon. No browser profiles are
+read, commands executed, or desktop files modified to resolve a web app.
 
 ## Remove
 
@@ -103,7 +95,10 @@ closes an abandoned switcher.
 ```bash
 lua tests/switcher.lua
 luac -p altswitch.lua
+node tests/app-identity.cjs
 ```
+
+Node.js is only needed for the JavaScript resolver tests, not to run the plugin.
 
 The panel does not grab keyboard input. Unbound keys can reach the underlying
 application while the strip is open. Window thumbnails are not included.

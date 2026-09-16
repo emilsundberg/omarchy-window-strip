@@ -17,6 +17,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Ui
+import "AppIdentity.js" as AppIdentity
 
 Item {
   id: root
@@ -32,19 +33,17 @@ Item {
   readonly property int tileHeight: Style.space(112)
   readonly property var selectedWindow: windows[selectedIndex] || ({})
 
-  function friendlyAppName(appClass) {
+  function appEntry(appClass) {
     const raw = String(appClass || "").trim()
-    if (!raw) return "Unknown"
+    if (!raw) return null
+    const entry = AppIdentity.findEntry(raw, DesktopEntries.applications.values || [])
+    // Browser heuristics may resolve an unmatched web app to the browser itself.
+    return entry || (AppIdentity.webApp(raw) ? null : DesktopEntries.heuristicLookup(raw))
+  }
 
-    // Window classes usually match a desktop-file id or StartupWMClass.
-    // Let Quickshell resolve both before falling back to formatting the id.
-    const entry = DesktopEntries.heuristicLookup(raw)
-    if (entry && entry.name) return String(entry.name)
-
-    let name = raw.replace(/^steam_app_/i, "")
-    if (name.indexOf(".") !== -1) name = name.split(".").pop()
-    name = name.replace(/[_-]+/g, " ").trim()
-    return name.replace(/(^|\s)\S/g, function(letter) { return letter.toUpperCase() })
+  function friendlyAppName(appClass) {
+    const entry = root.appEntry(appClass)
+    return entry && entry.name ? String(entry.name) : AppIdentity.fallbackName(appClass)
   }
 
   // Use Omarchy's disk index fallback when Qt cannot resolve themed icons.
@@ -95,7 +94,7 @@ Item {
 
   function appIcon(appClass) {
     const raw = String(appClass || "").trim()
-    const entry = raw ? DesktopEntries.heuristicLookup(raw) : null
+    const entry = root.appEntry(raw)
     const icon = entry ? String(entry.icon || "") : ""
 
     if (icon.indexOf("file://") === 0 || icon.indexOf("image://") === 0) return icon
