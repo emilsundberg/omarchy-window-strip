@@ -1,6 +1,6 @@
-# Icon window switcher for Omarchy
+# Window Strip for Omarchy
 
-A compact, Mac-style window switcher with large application icons and a single
+A compact window switcher with large application icons and a single
 window-title line. Each window gets its own entry, including multiple windows
 from the same app.
 
@@ -25,7 +25,7 @@ scratchpad workspaces are excluded. Focus changes only when you release Ctrl.
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/emilsundberg/omarchy-icon-switcher.git --enable
+omarchy plugin add https://github.com/emilsundberg/omarchy-window-strip.git --enable
 ```
 
 Add this line to `~/.config/hypr/bindings.lua`:

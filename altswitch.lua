@@ -1,4 +1,4 @@
--- Ctrl+Tab keyboard handling for Icon window switcher.
+-- Ctrl+Tab keyboard handling for Window Strip.
 -- Windows-style CTRL+TAB for Hyprland: cycle every window on every workspace,
 -- most recently used first. Hold CTRL, tap TAB to move down the list, release
 -- CTRL to jump to the highlighted window. CTRL+SHIFT+TAB moves back up, ESCAPE
