@@ -45,6 +45,9 @@ These bindings replace existing **Ctrl+Tab**, **Ctrl+Shift+Tab**, and
 **Ctrl+Escape** bindings. Ctrl+Tab will switch windows instead of tabs inside
 applications. Alt+Tab is unchanged.
 
+Omarchy's region picker temporarily uses Ctrl+Tab too. The plugin restores its
+binding after the last picker layer closes, including when a capture is canceled.
+
 If migrating from the original `omarchy-altswitch`, remove its `dofile` line
 from your Hyprland configuration and disable its panel:
 

@@ -133,9 +133,33 @@ _G.__emil_altswitch_cancel = altswitch_teardown
 hl.unbind("CTRL + TAB")
 hl.unbind("CTRL + SHIFT + TAB")
 hl.unbind("CTRL + ESCAPE")
-hl.bind("CTRL + TAB", function() altswitch_step(1) end, { description = "Switch window" })
+local function bind_forward()
+  hl.bind("CTRL + TAB", function() altswitch_step(1) end, { description = "Switch window" })
+end
+
+bind_forward()
 hl.bind("CTRL + SHIFT + TAB", function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
 hl.bind("CTRL + ESCAPE", altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
+
+-- Omarchy's region picker borrows Ctrl+Tab. In Hyprland 0.56, unbinding
+-- its handle also removes our same-key binding. These callbacks run after
+-- Omarchy's handlers; restore ours once the last monitor's picker closes.
+local selection_layers = 0
+hl.on("layer.opened", function(layer)
+  if layer.namespace == "selection" then
+    selection_layers = selection_layers + 1
+  end
+end)
+
+hl.on("layer.closed", function(layer)
+  if layer.namespace == "selection" and selection_layers > 0 then
+    selection_layers = selection_layers - 1
+    if selection_layers == 0 then
+      hl.unbind("CTRL + TAB")
+      bind_forward()
+    end
+  end
+end)
 
 -- Committing on CTRL release cannot be a keybind. A release bind on a modifier
 -- only fires when that modifier is tapped on its own; pressing TAB in between
