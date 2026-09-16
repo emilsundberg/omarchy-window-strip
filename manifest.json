@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "emil.altswitch",
-  "name": "Icon window switcher",
+  "name": "Window Strip",
   "version": "1.0.0",
   "author": "Emil Sundberg",
-  "description": "Mac-style window switcher with app icons, Ctrl+Tab navigation, and no dimmed backdrop.",
+  "description": "Horizontal window switcher with app icons, Ctrl+Tab navigation, and no dimmed backdrop.",
   "kinds": [
     "panel"
   ],

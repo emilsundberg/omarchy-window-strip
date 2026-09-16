@@ -1,4 +1,4 @@
-// Icon window switcher for Omarchy.
+// Window Strip for Omarchy.
 //
 // This is the display half only. All key handling and all state live in
 // altswitch.lua next to this file, loaded from the Hyprland config. It owns the
