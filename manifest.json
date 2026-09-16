@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "emil.altswitch",
+  "name": "Icon window switcher",
+  "version": "1.0.0",
+  "author": "Emil Sundberg",
+  "description": "Mac-style window switcher with app icons, Ctrl+Tab navigation, and no dimmed backdrop.",
+  "kinds": [
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "panel": "AltSwitch.qml"
+  }
+}
