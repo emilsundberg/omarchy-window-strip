@@ -1,7 +1,7 @@
--- Ctrl+Tab keyboard handling for Window Strip.
--- Windows-style CTRL+TAB for Hyprland: cycle every window on every workspace,
--- most recently used first. Hold CTRL, tap TAB to move down the list, release
--- CTRL to jump to the highlighted window. CTRL+SHIFT+TAB moves back up, ESCAPE
+-- Super+Tab keyboard handling for Window Strip.
+-- Cycle every window on every workspace, most recently used first. Hold SUPER,
+-- tap TAB to move down the list, release SUPER to jump to the highlighted
+-- window. SUPER+SHIFT+TAB moves back up, ESCAPE
 -- cancels.
 --
 -- Load it from ~/.config/hypr/bindings.lua:
@@ -69,7 +69,7 @@ end
 
 local function altswitch_commit()
   if not altswitch.active then
-    return -- nothing in flight; the Ctrl release fires on every switch-less tap
+    return -- nothing in flight; the Super release fires on every switch-less tap
   end
 
   -- Read the address before tearing down. Teardown drops the snapshot, and the
@@ -129,17 +129,19 @@ end
 -- cannot disagree about whether a switch is still in progress.
 _G.__emil_altswitch_cancel = altswitch_teardown
 
--- Replace existing Ctrl+Tab shortcuts before registering the switcher.
-hl.unbind("CTRL + TAB")
-hl.unbind("CTRL + SHIFT + TAB")
-hl.unbind("CTRL + ESCAPE")
+-- Replace existing Super+Tab shortcuts before registering the switcher.
+hl.unbind("ALT + TAB")
+hl.unbind("ALT + SHIFT + TAB")
+hl.unbind("SUPER + TAB")
+hl.unbind("SUPER + SHIFT + TAB")
+hl.unbind("SUPER + ESCAPE")
 local function bind_forward()
-  hl.bind("CTRL + TAB", function() altswitch_step(1) end, { description = "Switch window" })
+  hl.bind("SUPER + TAB", function() altswitch_step(1) end, { description = "Switch window" })
 end
 
 bind_forward()
-hl.bind("CTRL + SHIFT + TAB", function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
-hl.bind("CTRL + ESCAPE", altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
+hl.bind("SUPER + SHIFT + TAB", function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
+hl.bind("SUPER + ESCAPE", altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
 
 -- Omarchy's region picker borrows Ctrl+Tab. In Hyprland 0.56, unbinding
 -- its handle also removes our same-key binding. These callbacks run after
@@ -155,23 +157,23 @@ hl.on("layer.closed", function(layer)
   if layer.namespace == "selection" and selection_layers > 0 then
     selection_layers = selection_layers - 1
     if selection_layers == 0 then
-      hl.unbind("CTRL + TAB")
+      hl.unbind("SUPER + TAB")
       bind_forward()
     end
   end
 end)
 
--- Committing on CTRL release cannot be a keybind. A release bind on a modifier
+-- Committing on SUPER release cannot be a keybind. A release bind on a modifier
 -- only fires when that modifier is tapped on its own; pressing TAB in between
 -- cancels it, which is exactly what every switch does. So the raw key stream is
 -- read instead, where the release always shows up.
 --
--- 37 is Control_L and 105 is Control_R. This runs for every keystroke on the system, so
+-- 133 is Super_L and 134 is Super_R. This runs for every keystroke on the system, so
 -- it stays down to two integer compares and a boolean unless a switch is up.
-local CTRL_KEYCODES = { [37] = true, [105] = true }
+local SUPER_KEYCODES = { [133] = true, [134] = true }
 
 hl.on("input.keyboard.key", function(keycode, _, state)
-  if state == 0 and altswitch.active and CTRL_KEYCODES[keycode] then
+  if state == 0 and altswitch.active and SUPER_KEYCODES[keycode] then
     altswitch_commit()
   end
 end)
