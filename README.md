@@ -47,6 +47,21 @@ These bindings replace existing **Ctrl+Tab**, **Ctrl+Shift+Tab**, and
 **Ctrl+Escape** bindings. Ctrl+Tab will switch windows instead of tabs inside
 applications. Alt+Tab is unchanged.
 
+### Use Super+Tab instead
+
+To leave Ctrl+Tab to applications (browser tabs, for example), set the
+modifier before the `dofile` line:
+
+```lua
+window_strip_modifier = "SUPER"
+dofile(os.getenv("HOME") .. "/.config/omarchy/plugins/emil.altswitch/altswitch.lua")
+```
+
+Hold **Super** and tap **Tab** to cycle, add **Shift** to go backward, release
+**Super** to switch, and press **Escape** to cancel. This replaces Omarchy's
+Super+Tab and Super+Shift+Tab workspace shortcuts; Super+Escape stays the
+system menu. `"ALT"` works the same way and replaces Alt+Tab.
+
 Omarchy's region picker temporarily uses Ctrl+Tab too. The plugin restores its
 binding after the last picker layer closes, including when a capture is canceled.
 
@@ -94,6 +109,7 @@ closes an abandoned switcher.
 
 ```bash
 lua tests/switcher.lua
+lua tests/switcher-super.lua
 luac -p altswitch.lua
 node tests/app-identity.cjs
 ```

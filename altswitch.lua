@@ -1,4 +1,4 @@
--- Ctrl+Tab keyboard handling for Window Strip.
+-- Ctrl+Tab (or Super+Tab, see window_strip_modifier) keyboard handling for Window Strip.
 -- Windows-style CTRL+TAB for Hyprland: cycle every window on every workspace,
 -- most recently used first. Hold CTRL, tap TAB to move down the list, release
 -- CTRL to jump to the highlighted window. CTRL+SHIFT+TAB moves back up, ESCAPE
@@ -18,6 +18,27 @@
 --     would drag you across workspaces on the way past.
 
 local altswitch = { windows = {}, index = 1, active = false }
+
+-- The held modifier, CTRL by default. Set it before loading this file:
+--
+--   window_strip_modifier = "SUPER"   -- or "ALT"
+--
+-- Releasing it commits the switch, so it needs its raw keycodes too.
+local MODIFIER_KEYCODES = {
+  CTRL = { [37] = true, [105] = true },  -- Control_L, Control_R
+  SUPER = { [133] = true, [134] = true }, -- Super_L, Super_R
+  ALT = { [64] = true, [108] = true },    -- Alt_L, Alt_R
+}
+local MOD = string.upper(tostring(rawget(_G, "window_strip_modifier") or "CTRL"))
+if not MODIFIER_KEYCODES[MOD] then
+  MOD = "CTRL"
+end
+local FORWARD = MOD .. " + TAB"
+local BACKWARD = MOD .. " + SHIFT + TAB"
+-- Super+Escape is Omarchy's system menu, so only CTRL and ALT take MOD+Escape.
+-- Escape always cancels through the raw key stream below.
+local CANCEL = MOD ~= "SUPER" and MOD .. " + ESCAPE" or nil
+local ESCAPE_KEYCODE = 9
 
 -- Single-quote a string for the shell. Omarchy's config helpers provide this,
 -- but this file also has to work without them.
@@ -129,17 +150,19 @@ end
 -- cannot disagree about whether a switch is still in progress.
 _G.__emil_altswitch_cancel = altswitch_teardown
 
--- Replace existing Ctrl+Tab shortcuts before registering the switcher.
-hl.unbind("CTRL + TAB")
-hl.unbind("CTRL + SHIFT + TAB")
-hl.unbind("CTRL + ESCAPE")
+-- Replace existing shortcuts on these keys before registering the switcher.
+hl.unbind(FORWARD)
+hl.unbind(BACKWARD)
 local function bind_forward()
-  hl.bind("CTRL + TAB", function() altswitch_step(1) end, { description = "Switch window" })
+  hl.bind(FORWARD, function() altswitch_step(1) end, { description = "Switch window" })
 end
 
 bind_forward()
-hl.bind("CTRL + SHIFT + TAB", function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
-hl.bind("CTRL + ESCAPE", altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
+hl.bind(BACKWARD, function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
+if CANCEL then
+  hl.unbind(CANCEL)
+  hl.bind(CANCEL, altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
+end
 
 -- Omarchy's region picker borrows Ctrl+Tab. In Hyprland 0.56, unbinding
 -- its handle also removes our same-key binding. These callbacks run after
@@ -155,24 +178,29 @@ hl.on("layer.closed", function(layer)
   if layer.namespace == "selection" and selection_layers > 0 then
     selection_layers = selection_layers - 1
     if selection_layers == 0 then
-      hl.unbind("CTRL + TAB")
+      hl.unbind(FORWARD)
       bind_forward()
     end
   end
 end)
 
--- Committing on CTRL release cannot be a keybind. A release bind on a modifier
+-- Committing on modifier release cannot be a keybind. A release bind on a modifier
 -- only fires when that modifier is tapped on its own; pressing TAB in between
 -- cancels it, which is exactly what every switch does. So the raw key stream is
 -- read instead, where the release always shows up.
 --
--- 37 is Control_L and 105 is Control_R. This runs for every keystroke on the system, so
--- it stays down to two integer compares and a boolean unless a switch is up.
-local CTRL_KEYCODES = { [37] = true, [105] = true }
+-- This runs for every keystroke on the system, so it stays down to a boolean
+-- unless a switch is up.
+local RELEASE_KEYCODES = MODIFIER_KEYCODES[MOD]
 
 hl.on("input.keyboard.key", function(keycode, _, state)
-  if state == 0 and altswitch.active and CTRL_KEYCODES[keycode] then
+  if not altswitch.active then
+    return
+  end
+  if state == 0 and RELEASE_KEYCODES[keycode] then
     altswitch_commit()
+  elseif state == 1 and keycode == ESCAPE_KEYCODE then
+    altswitch_teardown()
   end
 end)
 
