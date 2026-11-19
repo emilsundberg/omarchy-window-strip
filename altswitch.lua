@@ -36,7 +36,6 @@ end
 local FORWARD = MOD .. " + TAB"
 local BACKWARD = MOD .. " + SHIFT + TAB"
 local CANCEL = MOD .. " + ESCAPE"
-local ESCAPE_KEYCODE = 9
 
 -- While the strip is up, Hyprland runs in this submap. Only the switcher's own
 -- keys are bound in it, so MOD+Escape cancels instead of reaching whatever it
@@ -187,6 +186,8 @@ hl.bind(BACKWARD, function() altswitch_step(-1) end, { description = "Switch win
 hl.define_submap(SUBMAP, function()
   hl.bind(BACKWARD, function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
   hl.bind(CANCEL, altswitch_teardown, { description = "Cancel window switch" })
+  -- Plain Escape still reaches the focused application, as it always has.
+  hl.bind("ESCAPE", altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
 end)
 
 -- Omarchy's region picker borrows Ctrl+Tab. In Hyprland 0.56, unbinding
@@ -222,10 +223,11 @@ hl.on("input.keyboard.key", function(keycode, _, state)
   if not altswitch.active then
     return
   end
+  -- Escape is handled by the submap binds. This hook runs before binds, so
+  -- cancelling here would leave the submap before MOD+Escape is matched, and
+  -- Omarchy's system menu would open as well.
   if state == 0 and RELEASE_KEYCODES[keycode] then
     altswitch_commit()
-  elseif state == 1 and keycode == ESCAPE_KEYCODE then
-    altswitch_teardown()
   end
 end)
 

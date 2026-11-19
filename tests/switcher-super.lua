@@ -72,6 +72,8 @@ assert(menu_opened, 'Super+Escape must be the system menu again afterwards')
 
 press('SUPER + TAB')
 events['input.keyboard.key'](9, nil, 1)
+assert(current_submap == 'emil-altswitch', 'the raw Escape press must leave cancelling to the binds')
+press('ESCAPE')
 lastContains('emil.altswitch hide')
 count = #commands
 events['input.keyboard.key'](134, nil, 0)
