@@ -2,7 +2,7 @@
 -- Windows-style CTRL+TAB for Hyprland: cycle every window on every workspace,
 -- most recently used first. Hold CTRL, tap TAB to move down the list, release
 -- CTRL to jump to the highlighted window. CTRL+SHIFT+TAB moves back up, ESCAPE
--- cancels.
+-- cancels, and clicking a tile jumps straight to that window.
 --
 -- Load it from ~/.config/hypr/bindings.lua:
 --
@@ -35,10 +35,15 @@ if not MODIFIER_KEYCODES[MOD] then
 end
 local FORWARD = MOD .. " + TAB"
 local BACKWARD = MOD .. " + SHIFT + TAB"
--- Super+Escape is Omarchy's system menu, so only CTRL and ALT take MOD+Escape.
--- Escape always cancels through the raw key stream below.
-local CANCEL = MOD ~= "SUPER" and MOD .. " + ESCAPE" or nil
+local CANCEL = MOD .. " + ESCAPE"
 local ESCAPE_KEYCODE = 9
+
+-- While the strip is up, Hyprland runs in this submap. Only the switcher's own
+-- keys are bound in it, so MOD+Escape cancels instead of reaching whatever it
+-- normally does (Omarchy's system menu for Super), and Super+click selects a
+-- tile instead of dragging the window under it. Leaving the submap restores
+-- every regular binding untouched.
+local SUBMAP = "emil-altswitch"
 
 -- Single-quote a string for the shell. Omarchy's config helpers provide this,
 -- but this file also has to work without them.
@@ -83,6 +88,9 @@ local function altswitch_payload()
 end
 
 local function altswitch_teardown()
+  if altswitch.active then
+    hl.dispatch(hl.dsp.submap("reset"))
+  end
   altswitch.active = false
   altswitch.windows = {}
   altswitch_send("hide")
@@ -142,27 +150,44 @@ local function altswitch_step(delta)
   -- and one back-tap has to wrap to the oldest.
   altswitch.index = delta % #altswitch.windows + 1
   altswitch.active = true
+  hl.dispatch(hl.dsp.submap(SUBMAP))
   altswitch_send("show", altswitch_payload())
+end
+
+-- Clicking a tile in the panel commits that window. The panel indexes from zero.
+local function altswitch_activate(index)
+  index = tonumber(index)
+  if not altswitch.active or not index or not altswitch.windows[index + 1] then
+    return
+  end
+  altswitch.index = index + 1
+  altswitch_commit()
 end
 
 -- Self-heal hook for the panel. If the CTRL release is ever missed, the panel
 -- gives up on its own after a few seconds and calls this, so the two halves
 -- cannot disagree about whether a switch is still in progress.
 _G.__emil_altswitch_cancel = altswitch_teardown
+_G.__emil_altswitch_activate = altswitch_activate
 
 -- Replace existing shortcuts on these keys before registering the switcher.
+-- Hyprland's unbind removes a key from every submap, so the forward key is
+-- registered in both places whenever it has to be restored.
 hl.unbind(FORWARD)
 hl.unbind(BACKWARD)
 local function bind_forward()
   hl.bind(FORWARD, function() altswitch_step(1) end, { description = "Switch window" })
+  hl.define_submap(SUBMAP, function()
+    hl.bind(FORWARD, function() altswitch_step(1) end, { description = "Switch window" })
+  end)
 end
 
 bind_forward()
 hl.bind(BACKWARD, function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
-if CANCEL then
-  hl.unbind(CANCEL)
-  hl.bind(CANCEL, altswitch_teardown, { non_consuming = true, description = "Cancel window switch" })
-end
+hl.define_submap(SUBMAP, function()
+  hl.bind(BACKWARD, function() altswitch_step(-1) end, { description = "Switch window (reverse)" })
+  hl.bind(CANCEL, altswitch_teardown, { description = "Cancel window switch" })
+end)
 
 -- Omarchy's region picker borrows Ctrl+Tab. In Hyprland 0.56, unbinding
 -- its handle also removes our same-key binding. These callbacks run after

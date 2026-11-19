@@ -10,6 +10,7 @@ from the same app.
 - Press **Ctrl+Shift+Tab** to go backward.
 - Release **Ctrl** to activate the selected window.
 - Press **Ctrl+Escape** to cancel.
+- Click an app in the strip to switch to it right away.
 
 The strip follows your Omarchy theme, has no dimmed backdrop, and disables its
 own compositor fade animation. Installed icon files provide a fallback when
@@ -43,8 +44,8 @@ hyprctl reload
 hyprctl configerrors
 ```
 
-These bindings replace existing **Ctrl+Tab**, **Ctrl+Shift+Tab**, and
-**Ctrl+Escape** bindings. Ctrl+Tab will switch windows instead of tabs inside
+These bindings replace existing **Ctrl+Tab** and **Ctrl+Shift+Tab**
+bindings. Ctrl+Tab will switch windows instead of tabs inside
 applications. Alt+Tab is unchanged.
 
 ### Use Super+Tab instead
@@ -58,9 +59,14 @@ dofile(os.getenv("HOME") .. "/.config/omarchy/plugins/emil.altswitch/altswitch.l
 ```
 
 Hold **Super** and tap **Tab** to cycle, add **Shift** to go backward, release
-**Super** to switch, and press **Escape** to cancel. This replaces Omarchy's
-Super+Tab and Super+Shift+Tab workspace shortcuts; Super+Escape stays the
-system menu. `"ALT"` works the same way and replaces Alt+Tab.
+**Super** to switch, and press **Escape** or **Super+Escape** to cancel. This
+replaces Omarchy's Super+Tab and Super+Shift+Tab workspace shortcuts.
+Super+Escape opens the system menu as usual whenever the strip is closed.
+`"ALT"` works the same way and replaces Alt+Tab.
+
+While the strip is open, Hyprland is in a small `emil-altswitch` submap that
+binds only the switcher's keys. Other shortcuts on the held modifier, such as
+Super+Escape or Super+drag, are paused until the switch ends.
 
 Omarchy's region picker temporarily uses Ctrl+Tab too. The plugin restores its
 binding after the last picker layer closes, including when a capture is canceled.
@@ -116,7 +122,8 @@ node tests/app-identity.cjs
 
 Node.js is only needed for the JavaScript resolver tests, not to run the plugin.
 
-The panel does not grab keyboard input. Unbound keys can reach the underlying
+The panel does not grab keyboard input; a clicked tile commits through
+`hyprctl eval`, just like a modifier release. Unbound keys can reach the underlying
 application while the strip is open. Window thumbnails are not included.
 
 ## Credits
