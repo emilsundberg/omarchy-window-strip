@@ -8,7 +8,8 @@
 //   omarchy-shell emil.altswitch select 2
 //   omarchy-shell emil.altswitch hide
 //
-// This panel never takes keyboard focus; Hyprland handles Ctrl+Tab.
+// This panel never takes keyboard focus; Hyprland handles Ctrl+Tab. Clicking a
+// tile asks altswitch.lua to switch to that window.
 
 import Quickshell
 import Quickshell.Io
@@ -134,6 +135,14 @@ Item {
     root.opened = false
   }
 
+  // The Hyprland half owns the window list, so a click only names the tile and
+  // lets it commit the switch exactly as a modifier release would.
+  function activate(index) {
+    if (!root.opened || index < 0 || index >= root.windows.length) return
+    root.selectedIndex = index
+    Quickshell.execDetached(["hyprctl", "eval", "__emil_altswitch_activate(" + index + ")"])
+  }
+
   // A switch ends when Ctrl is released, detected by the Hyprland
   // config. If that release is ever missed the panel would sit on screen for
   // good, so it also gives up on its own and tells the config to reset.
@@ -236,6 +245,12 @@ Item {
             border.width: selected ? Math.max(1, Style.space(2)) : 0
             border.color: Color.menu.selectedText
             Accessible.name: root.friendlyAppName(modelData.appClass) + ": " + modelData.title
+
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.activate(index)
+            }
 
             ColumnLayout {
               anchors.fill: parent
